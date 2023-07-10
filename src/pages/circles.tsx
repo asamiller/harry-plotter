@@ -34,7 +34,7 @@ export default function Home() {
   });
 
   const numberOfLines = useSliderKnob({
-    name: "Lines",
+    name: "Circles",
     initialValue: 10,
     min: 1,
     max: 10000,
@@ -55,11 +55,10 @@ export default function Home() {
 
         {[...Array(numberOfLines)].map((_, i) => {
           return (
-            <line
-              x1={random() * pageWidth}
-              y1={random() * pageHeight}
-              x2={random() * pageWidth}
-              y2={random() * pageHeight}
+            <circle
+              cx={random() * pageWidth}
+              cy={random() * pageHeight}
+              r={penSize}
               stroke={penColor}
               strokeWidth={penSize}
               strokeLinecap="round"
