@@ -16,50 +16,44 @@ enum KnobTypes {
 interface SelectKnob {
   name: string;
   type: KnobTypes;
-  value: string;
   values: string[];
 }
 
 interface SliderKnob {
   name: string;
   type: KnobTypes;
-  value: number;
   min: number;
   max: number;
   steps?: number;
 }
 
 type Knob = SelectKnob | SliderKnob;
+type KnobValue = string | number;
+const knobProps: {
+  [key: string]: Knob;
+} = {};
+
 interface KnobsState {
-  knobsByPath: {
-    [path: string]: {
-      [key: string]: Knob;
-    };
+  knobValues: {
+    [key: string]: string | number;
   };
-  setKnobValue: (path: string, name: string, value: string | number) => void;
-  addKnob: (path: string, knob: Knob) => void;
+  setKnobValue: (key: string, value: KnobValue) => void;
+  addKnob: (key: string, knob: Knob, value: KnobValue) => void;
 }
 
 const useKnobsStore = create<KnobsState>()(
   persist(
     immer<KnobsState>((set) => ({
-      knobsByPath: {},
-      setKnobValue: (path, name, value) => {
+      knobValues: {},
+      setKnobValue: (key, value) => {
         set((state) => {
-          state.knobsByPath[path][name].value = value;
+          state.knobValues[key] = value;
         });
       },
-      addKnob: (path: string, knob: Knob) => {
+      addKnob: (key, knob, value) => {
         set((state) => {
-          if (!state.knobsByPath[path]) {
-            state.knobsByPath[path] = {};
-          }
-
-          const currentValue = state.knobsByPath[path][knob.name]?.value;
-          state.knobsByPath[path][knob.name] = knob;
-          if (currentValue) {
-            state.knobsByPath[path][knob.name].value = currentValue;
-          }
+          state.knobValues[key] = state.knobValues[key] ?? value;
+          knobProps[key] = knob;
         });
       },
     })),
@@ -78,24 +72,31 @@ const useKnobs = () => {
   // create a function to set the value of a knob
   const setKnob = useCallback(
     (name: string, value: string | number) => {
-      store.setKnobValue(pathname, name, value);
+      store.setKnobValue(pathname + name, value);
     },
     [pathname, store]
   );
 
   const addKnob = useCallback(
-    (knob: Knob) => {
-      store.addKnob(pathname, knob);
+    (knob: Knob, value: KnobValue) => {
+      store.addKnob(pathname + knob.name, knob, value);
     },
     [pathname, store]
   );
 
-  return { knobs: store.knobsByPath[pathname] ?? {}, setKnob, addKnob };
+  const getKnobValue = useCallback(
+    (name: string) => {
+      return store.knobValues[pathname + name];
+    },
+    [pathname, store]
+  );
+
+  return { getKnobValue, setKnob, addKnob };
 };
 
 interface KnobsProps {}
 export const Knobs: FC<KnobsProps> = ({}) => {
-  const { knobs, setKnob } = useKnobs();
+  const { getKnobValue, setKnob } = useKnobs();
 
   const download = useCallback(() => {
     const dataURL =
@@ -122,25 +123,26 @@ export const Knobs: FC<KnobsProps> = ({}) => {
         padding: 8,
       }}
     >
-      {Object.values(knobs).map((knob) => {
-        switch (knob.type) {
+      {Object.values(knobProps).map((knobProp) => {
+        const knobValue = getKnobValue(knobProp.name);
+        switch (knobProp.type) {
           case KnobTypes.select:
-            const selectKnob = knob as SelectKnob;
+            const selectKnob = knobProp as SelectKnob;
             return (
               <Select
                 name={selectKnob.name}
-                value={selectKnob.value}
+                value={knobValue as string}
                 values={selectKnob.values}
                 onChange={(value) => setKnob(selectKnob.name, value)}
                 key={selectKnob.name}
               />
             );
           case KnobTypes.slider:
-            const sliderKnob = knob as SliderKnob;
+            const sliderKnob = knobProp as SliderKnob;
             return (
               <Slider
                 name={sliderKnob.name}
-                value={sliderKnob.value}
+                value={knobValue as number}
                 min={sliderKnob.min}
                 max={sliderKnob.max}
                 steps={sliderKnob.steps}
@@ -150,11 +152,11 @@ export const Knobs: FC<KnobsProps> = ({}) => {
             );
 
           case KnobTypes.random:
-            const randomKnob = knob as SliderKnob;
+            const randomKnob = knobProp as SliderKnob;
             return (
               <Slider
-                name={randomKnob.name}
-                value={randomKnob.value}
+                name={`${randomKnob.name} Seed`}
+                value={knobValue as number}
                 min={1}
                 max={1000}
                 steps={1}
@@ -171,21 +173,22 @@ export const Knobs: FC<KnobsProps> = ({}) => {
 };
 
 export function useRandomKnob(name: string): () => number {
-  const { knobs, setKnob, addKnob } = useKnobs();
-  const knob = knobs[name];
+  const { getKnobValue, setKnob, addKnob } = useKnobs();
 
   useEffect(() => {
-    addKnob({
-      name,
-      type: KnobTypes.slider,
-      value: 1,
-      min: 1,
-      max: 1000,
-      steps: 1,
-    });
+    addKnob(
+      {
+        name,
+        type: KnobTypes.slider,
+        min: 1,
+        max: 1000,
+        steps: 1,
+      },
+      1
+    );
   }, []);
 
-  const rng = prand.xoroshiro128plus((knob?.value as number) ?? 1);
+  const rng = prand.xoroshiro128plus((getKnobValue(name) as number) ?? 1);
   return () => (rng.unsafeNext() >>> 0) / 0x100000000;
 }
 
@@ -200,19 +203,20 @@ export function useSelectKnob<T>({
   values,
   initialValue,
 }: SelectKnobProps): T {
-  const { knobs, setKnob, addKnob } = useKnobs();
-  const knob = knobs[name];
+  const { getKnobValue, setKnob, addKnob } = useKnobs();
 
   useEffect(() => {
-    addKnob({
-      name,
-      type: KnobTypes.select,
-      value: initialValue ?? values[0],
-      values,
-    });
+    addKnob(
+      {
+        name,
+        type: KnobTypes.select,
+        values,
+      },
+      initialValue ?? values[0]
+    );
   }, []);
 
-  return (knob?.value ?? initialValue ?? values[0]) as T;
+  return (getKnobValue(name) ?? initialValue ?? values[0]) as T;
 }
 
 interface SliderKnobProps {
@@ -229,25 +233,25 @@ export function useSliderKnob({
   initialValue,
   steps,
 }: SliderKnobProps): number {
-  const { knobs, setKnob, addKnob } = useKnobs();
-  const knob = knobs[name];
+  const { getKnobValue, setKnob, addKnob } = useKnobs();
 
   useEffect(() => {
-    addKnob({
-      name,
-      type: KnobTypes.slider,
-      value: initialValue ?? min,
-      min,
-      max,
-      steps,
-    });
+    addKnob(
+      {
+        name,
+        type: KnobTypes.slider,
+        min,
+        max,
+        steps,
+      },
+      initialValue ?? min
+    );
   }, []);
 
-  return (knob?.value as number) ?? initialValue ?? min;
+  return (getKnobValue(name) as number) ?? initialValue ?? min;
 }
 
 export function useKnobValue<T>(name: string): T {
-  const { knobs } = useKnobs();
-  const knob = knobs[name];
-  return knob?.value as T;
+  const { getKnobValue } = useKnobs();
+  return getKnobValue(name) as T;
 }

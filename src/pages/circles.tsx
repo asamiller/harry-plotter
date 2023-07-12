@@ -33,15 +33,23 @@ export default function Home() {
     max: 10,
   });
 
-  const numberOfLines = useSliderKnob({
-    name: "Circles",
+  const numberOfCircles = useSliderKnob({
+    name: "# Circles",
     initialValue: 10,
     min: 1,
     max: 10000,
   });
 
+  const circleSizeChange = useSliderKnob({
+    name: "Size Variance",
+    initialValue: 1,
+    min: 1,
+    max: 100,
+  });
+
   const { pageHeight, pageWidth } = usePageSize(pageType);
-  const random = useRandomKnob("lines");
+  const randomPos = useRandomKnob("Circle Position");
+  const randomSize = useRandomKnob("Circle Size");
 
   return (
     <Frame>
@@ -53,14 +61,15 @@ export default function Home() {
       >
         <Page pageType={pageType} pageColor={pageColor} />
 
-        {[...Array(numberOfLines)].map((_, i) => {
+        {[...Array(numberOfCircles)].map((_, i) => {
           return (
             <circle
-              cx={random() * pageWidth}
-              cy={random() * pageHeight}
-              r={penSize}
+              cx={randomPos() * pageWidth}
+              cy={randomPos() * pageHeight}
+              r={randomSize() * circleSizeChange}
+              fill="none"
               stroke={penColor}
-              strokeWidth={penSize}
+              strokeWidth={Math.ceil(randomSize() * penSize)}
               strokeLinecap="round"
               key={i}
             />
