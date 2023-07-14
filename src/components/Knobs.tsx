@@ -14,6 +14,15 @@ const getUrlSearch = () => {
   return window.location.search.slice(1);
 };
 
+// Create a function that calls window.history.replaceState but debounces it so we don't spam the history
+let timer: NodeJS.Timeout | null = null;
+const debouncedReplaceState = (value: string) => {
+  timer && clearTimeout(timer);
+  timer = setTimeout(() => {
+    window.history.replaceState(null, "", `?${value}`);
+  }, 500);
+};
+
 const persistentStorage: StateStorage = {
   getItem: (key): string => {
     // Check URL first
@@ -29,7 +38,7 @@ const persistentStorage: StateStorage = {
   setItem: (key, newValue): void => {
     const searchParams = new URLSearchParams(getUrlSearch());
     searchParams.set(key, JSON.stringify(newValue));
-    window.history.replaceState(null, "", `?${searchParams.toString()}`);
+    debouncedReplaceState(searchParams.toString());
     localStorage.setItem(key, JSON.stringify(newValue));
   },
   removeItem: (key): void => {
