@@ -32,7 +32,7 @@ export const Slider: FC<SliderProps> = ({
         type="range"
         min={min}
         max={max}
-        value={value}
+        value={value ?? 0}
         step={steps}
         onChange={(e) => onChange(parseFloat(e.target.value))}
         className="w-full h-1 mb-6 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm dark:bg-gray-700"

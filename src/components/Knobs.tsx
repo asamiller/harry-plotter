@@ -3,13 +3,42 @@ import { useRouter } from "next/router";
 import prand from "pure-rand";
 import { FC, useCallback, useEffect } from "react";
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
+import { StateStorage, createJSONStorage, persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { PageColors, Pages } from "../components/Paper";
 import { PenColors } from "../constants";
 import { ColorPicker, Colors } from "./Color";
 import { Select } from "./Select";
 import { Slider } from "./Slider";
+
+const getUrlSearch = () => {
+  return window.location.search.slice(1);
+};
+
+const persistentStorage: StateStorage = {
+  getItem: (key): string => {
+    // Check URL first
+    if (getUrlSearch()) {
+      const searchParams = new URLSearchParams(getUrlSearch());
+      const storedValue = searchParams.get(key);
+      return JSON.parse(storedValue ?? "null");
+    } else {
+      // Otherwise, we should load from localstorage or alternative storage
+      return JSON.parse(localStorage.getItem(key) ?? "null");
+    }
+  },
+  setItem: (key, newValue): void => {
+    const searchParams = new URLSearchParams(getUrlSearch());
+    searchParams.set(key, JSON.stringify(newValue));
+    window.history.replaceState(null, null, `?${searchParams.toString()}`);
+    localStorage.setItem(key, JSON.stringify(newValue));
+  },
+  removeItem: (key): void => {
+    const searchParams = new URLSearchParams(getUrlSearch());
+    searchParams.delete(key);
+    window.location.search = searchParams.toString();
+  },
+};
 
 enum KnobTypes {
   select = "select",
@@ -67,7 +96,7 @@ const useKnobsStore = create<KnobsState>()(
     })),
     {
       name: "knobs-storage",
-      storage: createJSONStorage(() => sessionStorage),
+      storage: createJSONStorage(() => persistentStorage),
     }
   )
 );
