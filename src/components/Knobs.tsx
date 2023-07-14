@@ -87,7 +87,9 @@ const useKnobs = () => {
 
   const addKnob = useCallback(
     (knob: Knob) => {
-      addKnobProps(pathname + knob.name, knob);
+      if (pathname) {
+        addKnobProps(pathname + knob.name, knob);
+      }
     },
     [pathname]
   );
@@ -134,6 +136,14 @@ const useKnobs = () => {
     max: 10,
     type: KnobTypes.slider,
   });
+
+  // Init the global knob values
+  useEffect(() => {
+    initKnob("Page Type", Pages.portrait85x11);
+    initKnob("Page Color", PageColors.white);
+    initKnob("Pen Color", PenColors.black);
+    initKnob("Pen Size", 1);
+  }, []);
 
   return { getKnobValue, setKnob, addKnob, initKnob };
 };

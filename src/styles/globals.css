@@ -25,3 +25,11 @@ body {
     )
     rgb(var(--background-start-rgb));
 }
+
+html,
+body,
+#__next {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
