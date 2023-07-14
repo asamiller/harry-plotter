@@ -1,10 +1,9 @@
-import { Accordion, FormControl } from "@rewind-ui/core";
+import { Accordion, Button, FormControl } from "@rewind-ui/core";
 import { useRouter } from "next/router";
 import prand from "pure-rand";
 import { FC, useCallback, useEffect } from "react";
 import { create } from "zustand";
 import { StateStorage, createJSONStorage, persist } from "zustand/middleware";
-import { immer } from "zustand/middleware/immer";
 import { PageColors, Pages } from "../components/Paper";
 import { PenColors } from "../constants";
 import { ColorPicker, Colors } from "./Color";
@@ -69,6 +68,7 @@ interface ColorKnob {
 
 type Knob = SelectKnob | SliderKnob | ColorKnob;
 type KnobValue = string | number;
+
 const knobProps: {
   [key: string]: Knob;
 } = {};
@@ -77,26 +77,28 @@ function addKnobProps(key: string, knob: Knob) {
   knobProps[key] = knob;
 }
 
-interface KnobsState {
-  knobValues: {
-    [key: string]: string | number;
-  };
-  setKnobValue: (key: string, value: KnobValue) => void;
+interface KnobsStore {
+  [key: string]: KnobValue;
+  pathname: string;
 }
 
-const useKnobsStore = create<KnobsState>()(
+const useKnobsStore = create<KnobsStore>()(
   persist(
-    immer<KnobsState>((set) => ({
-      knobValues: {},
-      setKnobValue: (key, value) => {
-        set((state) => {
-          state.knobValues[key] = value;
-        });
-      },
-    })),
+    () => ({
+      pathname: "",
+    }),
     {
-      name: "knobs-storage",
+      name: "knobs",
       storage: createJSONStorage(() => persistentStorage),
+      partialize(state: KnobsStore) {
+        // Reduce the state object to only the keys that start with the current pathname
+        return Object.keys(state).reduce((acc, key) => {
+          if (key.startsWith(state.pathname)) {
+            acc[key] = state[key];
+          }
+          return acc;
+        }, {} as KnobsStore);
+      },
     }
   )
 );
@@ -109,9 +111,9 @@ const useKnobs = () => {
   // create a function to set the value of a knob
   const setKnob = useCallback(
     (name: string, value: string | number) => {
-      store.setKnobValue(pathname + name, value);
+      useKnobsStore.setState(() => ({ [pathname + name]: value }));
     },
-    [pathname, store]
+    [pathname]
   );
 
   const addKnob = useCallback(
@@ -125,18 +127,16 @@ const useKnobs = () => {
 
   const initKnob = useCallback(
     (name: string, value?: string | number) => {
-      const currentKnobValue = store.knobValues[pathname + name];
+      const currentKnobValue = store[pathname + name];
       if (value !== undefined && currentKnobValue === undefined) {
-        store.setKnobValue(pathname + name, value);
+        useKnobsStore.setState(() => ({ [pathname + name]: value }));
       }
     },
     [pathname, store]
   );
 
   const getKnobValue = useCallback(
-    (name: string) => {
-      return store.knobValues[pathname + name];
-    },
+    (name: string) => store[pathname + name],
     [pathname, store]
   );
 
@@ -172,6 +172,7 @@ const useKnobs = () => {
     initKnob("Page Color", PageColors.white);
     initKnob("Pen Color", PenColors.black);
     initKnob("Pen Size", 1);
+    useKnobsStore.setState(() => ({ pathname }));
   }, []);
 
   return { getKnobValue, setKnob, addKnob, initKnob };
@@ -193,6 +194,9 @@ export const Knobs: FC<KnobsProps> = ({}) => {
 
   const knobs = Object.values(knobProps);
 
+  const seedKnobs = knobs.filter((k) => k.type === KnobTypes.random);
+  const paramKnobs = knobs.filter((k) => k.type !== KnobTypes.random);
+
   return (
     <div
       suppressHydrationWarning
@@ -208,86 +212,85 @@ export const Knobs: FC<KnobsProps> = ({}) => {
       }}
     >
       <FormControl size="xs" className="p-2">
-        {knobs
-          .filter((k) => k.type !== KnobTypes.random)
-          .map((knobProp) => {
-            const knobValue = getKnobValue(knobProp.name);
-            switch (knobProp.type) {
-              case KnobTypes.select:
-                const selectKnob = knobProp as SelectKnob;
-                return (
-                  <Select
-                    name={selectKnob.name}
-                    value={knobValue as string}
-                    values={selectKnob.values}
-                    onChange={(value) => setKnob(selectKnob.name, value)}
-                    key={selectKnob.name}
-                  />
-                );
-              case KnobTypes.slider:
-                const sliderKnob = knobProp as SliderKnob;
-                return (
-                  <Slider
-                    name={sliderKnob.name}
-                    value={knobValue as number}
-                    min={sliderKnob.min}
-                    max={sliderKnob.max}
-                    steps={sliderKnob.steps}
-                    onChange={(value) => setKnob(sliderKnob.name, value)}
-                    key={sliderKnob.name}
-                  />
-                );
+        {paramKnobs.map((knobProp) => {
+          const knobValue = getKnobValue(knobProp.name);
+          switch (knobProp.type) {
+            case KnobTypes.select:
+              const selectKnob = knobProp as SelectKnob;
+              return (
+                <Select
+                  name={selectKnob.name}
+                  value={knobValue as string}
+                  values={selectKnob.values}
+                  onChange={(value) => setKnob(selectKnob.name, value)}
+                  key={selectKnob.name}
+                />
+              );
+            case KnobTypes.slider:
+              const sliderKnob = knobProp as SliderKnob;
+              return (
+                <Slider
+                  name={sliderKnob.name}
+                  value={knobValue as number}
+                  min={sliderKnob.min}
+                  max={sliderKnob.max}
+                  steps={sliderKnob.steps}
+                  onChange={(value) => setKnob(sliderKnob.name, value)}
+                  key={sliderKnob.name}
+                />
+              );
 
-              case KnobTypes.color:
-                const colorKnob = knobProp as ColorKnob;
-                return (
-                  <ColorPicker
-                    name={colorKnob.name}
-                    onClick={(value) => setKnob(colorKnob.name, value)}
-                    colors={colorKnob.colors}
-                    color={knobValue as Colors}
-                    key={colorKnob.name}
-                  />
-                );
-              default:
-                return null;
-            }
-          })}
+            case KnobTypes.color:
+              const colorKnob = knobProp as ColorKnob;
+              return (
+                <ColorPicker
+                  name={colorKnob.name}
+                  onClick={(value) => setKnob(colorKnob.name, value)}
+                  colors={colorKnob.colors}
+                  color={knobValue as Colors}
+                  key={colorKnob.name}
+                />
+              );
+            default:
+              return null;
+          }
+        })}
+
+        {seedKnobs.length > 0 && (
+          <Accordion
+            defaultItem="item-1"
+            activeColor="black"
+            bordered={false}
+            radius="none"
+            size="sm"
+            withRing={false}
+            className="text-sm text-black"
+          >
+            <Accordion.Item anchor="seeds">
+              <Accordion.Header>Seeds</Accordion.Header>
+              <Accordion.Body>
+                {seedKnobs.map((knobProp) => {
+                  const knobValue = getKnobValue(knobProp.name);
+                  const randomKnob = knobProp as SliderKnob;
+                  return (
+                    <Slider
+                      name={`${randomKnob.name} Seed`}
+                      value={knobValue as number}
+                      min={1}
+                      max={1000}
+                      steps={1}
+                      onChange={(value) => setKnob(randomKnob.name, value)}
+                      key={randomKnob.name}
+                    />
+                  );
+                })}
+              </Accordion.Body>
+            </Accordion.Item>
+          </Accordion>
+        )}
+
+        <Button onClick={download}>Download</Button>
       </FormControl>
-
-      <Accordion
-        defaultItem="item-1"
-        activeColor="black"
-        bordered={false}
-        radius="none"
-        size="sm"
-        withRing={false}
-        className="text-sm text-black"
-      >
-        <Accordion.Item anchor="seeds">
-          <Accordion.Header>Seeds</Accordion.Header>
-          <Accordion.Body>
-            {knobs
-              .filter((k) => k.type === KnobTypes.random)
-              .map((knobProp) => {
-                const knobValue = getKnobValue(knobProp.name);
-                const randomKnob = knobProp as SliderKnob;
-                return (
-                  <Slider
-                    name={`${randomKnob.name} Seed`}
-                    value={knobValue as number}
-                    min={1}
-                    max={1000}
-                    steps={1}
-                    onChange={(value) => setKnob(randomKnob.name, value)}
-                    key={randomKnob.name}
-                  />
-                );
-              })}
-          </Accordion.Body>
-        </Accordion.Item>
-      </Accordion>
-      <button onClick={download}>Download</button>
     </div>
   );
 };
