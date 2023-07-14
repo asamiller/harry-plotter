@@ -9,15 +9,37 @@ export default function Home() {
   const penColor = useKnobValue<PenColors>("Pen Color");
   const penSize = useKnobValue<number>("Pen Size");
 
-  const numberOfLines = useSliderKnob({
-    name: "Lines",
+  const largeCircles = useSliderKnob({
+    name: "Large #",
     initialValue: 10,
     min: 1,
-    max: 10000,
+    max: 100,
+  });
+
+  const medCircles = useSliderKnob({
+    name: "Med #",
+    initialValue: 10,
+    min: 1,
+    max: 100,
+  });
+
+  const smallCircles = useSliderKnob({
+    name: "Small #",
+    initialValue: 10,
+    min: 1,
+    max: 100,
+  });
+
+  const size = useSliderKnob({
+    name: "Sizes",
+    initialValue: 1,
+    min: 1,
+    max: 100,
   });
 
   const { pageHeight, pageWidth } = usePageSize(pageType);
-  const random = useRandomKnob("lines");
+  const randomPos = useRandomKnob("Circle Position");
+  const randomSize = useRandomKnob("Circle Size");
 
   return (
     <Frame>
@@ -29,16 +51,11 @@ export default function Home() {
       >
         <Page pageType={pageType} pageColor={pageColor} />
 
-        {[...Array(numberOfLines)].map((_, i) => {
+        {[...Array(largeCircles)].map((_, i) => {
           return (
-            <line
-              x1={random() * pageWidth}
-              y1={random() * pageHeight}
-              x2={random() * pageWidth}
-              y2={random() * pageHeight}
-              stroke={penColor}
-              strokeWidth={penSize}
-              strokeLinecap="round"
+            <polygon
+              points="175,209.6 131.7,284.6 218.3,284.6 "
+              fill={penColor}
               key={i}
             />
           );

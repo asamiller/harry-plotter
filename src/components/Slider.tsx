@@ -25,7 +25,7 @@ export const Slider: FC<SliderProps> = ({
         htmlFor={id}
         className="block text-sm font-medium leading-6 text-gray-900"
       >
-        {name}
+        {name}: {value}
       </label>
       <input
         id={id}
@@ -34,7 +34,7 @@ export const Slider: FC<SliderProps> = ({
         max={max}
         value={value}
         step={steps}
-        onChange={(e) => onChange(parseInt(e.target.value, 10))}
+        onChange={(e) => onChange(parseFloat(e.target.value))}
         className="w-full h-1 mb-6 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm dark:bg-gray-700"
       />
     </div>

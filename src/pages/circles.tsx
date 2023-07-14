@@ -1,47 +1,37 @@
 import Frame from "@/components/Frame";
-import {
-  useRandomKnob,
-  useSelectKnob,
-  useSliderKnob,
-} from "@/components/Knobs";
+import { useKnobValue, useRandomKnob, useSliderKnob } from "@/components/Knobs";
 import { Page, PageColors, Pages, usePageSize } from "@/components/Paper";
 import { PenColors } from "@/constants";
 
 export default function Home() {
-  const pageType = useSelectKnob<Pages>({
-    name: "Page Type",
-    values: Object.values(Pages),
-    initialValue: Pages.portrait85x11,
-  });
+  const pageColor = useKnobValue<PageColors>("Page Color");
+  const pageType = useKnobValue<Pages>("Page Type");
+  const penColor = useKnobValue<PenColors>("Pen Color");
+  const penSize = useKnobValue<number>("Pen Size");
 
-  const pageColor = useSelectKnob<PageColors>({
-    name: "Page Color",
-    values: Object.values(PageColors),
-    initialValue: PageColors.white,
-  });
-
-  const penColor = useSelectKnob<PenColors>({
-    name: "Pen Color",
-    values: Object.values(PenColors),
-    initialValue: PenColors.black,
-  });
-
-  const penSize = useSliderKnob({
-    name: "Pen Size",
-    initialValue: 1,
-    min: 1,
-    max: 10,
-  });
-
-  const numberOfCircles = useSliderKnob({
-    name: "# Circles",
+  const largeCircles = useSliderKnob({
+    name: "Large #",
     initialValue: 10,
     min: 1,
-    max: 10000,
+    max: 100,
   });
 
-  const circleSizeChange = useSliderKnob({
-    name: "Size Variance",
+  const medCircles = useSliderKnob({
+    name: "Med #",
+    initialValue: 10,
+    min: 1,
+    max: 100,
+  });
+
+  const smallCircles = useSliderKnob({
+    name: "Small #",
+    initialValue: 10,
+    min: 1,
+    max: 100,
+  });
+
+  const size = useSliderKnob({
+    name: "Sizes",
     initialValue: 1,
     min: 1,
     max: 100,
@@ -61,12 +51,40 @@ export default function Home() {
       >
         <Page pageType={pageType} pageColor={pageColor} />
 
-        {[...Array(numberOfCircles)].map((_, i) => {
+        {[...Array(largeCircles)].map((_, i) => {
           return (
             <circle
               cx={randomPos() * pageWidth}
               cy={randomPos() * pageHeight}
-              r={randomSize() * circleSizeChange}
+              r={randomSize() * size * 10}
+              fill="none"
+              stroke={penColor}
+              strokeWidth={Math.ceil(randomSize() * penSize)}
+              strokeLinecap="round"
+              key={i}
+            />
+          );
+        })}
+        {[...Array(medCircles)].map((_, i) => {
+          return (
+            <circle
+              cx={randomPos() * pageWidth}
+              cy={randomPos() * pageHeight}
+              r={randomSize() * size * 5}
+              fill="none"
+              stroke={penColor}
+              strokeWidth={Math.ceil(randomSize() * penSize)}
+              strokeLinecap="round"
+              key={i}
+            />
+          );
+        })}
+        {[...Array(smallCircles)].map((_, i) => {
+          return (
+            <circle
+              cx={randomPos() * pageWidth}
+              cy={randomPos() * pageHeight}
+              r={randomSize() * size}
               fill="none"
               stroke={penColor}
               strokeWidth={Math.ceil(randomSize() * penSize)}

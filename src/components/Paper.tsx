@@ -24,6 +24,14 @@ const heightToWidthRatios = {
 
 export function usePageSize(pageType: Pages) {
   const { width, height } = useWindowSize();
+
+  if (width === 0 || height === 0) {
+    return {
+      pageWidth: 0,
+      pageHeight: 0,
+    };
+  }
+
   const screenWidth = Math.max((width ?? 0) - PADDING * 2, 0);
   const screenHeight = Math.max((height ?? 0) - PADDING * 2, 0);
 

@@ -1,9 +1,13 @@
+import { Accordion, FormControl } from "@rewind-ui/core";
 import { useRouter } from "next/router";
 import prand from "pure-rand";
 import { FC, useCallback, useEffect } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import { PageColors, Pages } from "../components/Paper";
+import { PenColors } from "../constants";
+import { ColorPicker } from "./Color";
 import { Select } from "./Select";
 import { Slider } from "./Slider";
 
@@ -11,6 +15,7 @@ enum KnobTypes {
   select = "select",
   slider = "slider",
   random = "random",
+  color = "color",
 }
 
 interface SelectKnob {
@@ -27,18 +32,27 @@ interface SliderKnob {
   steps?: number;
 }
 
-type Knob = SelectKnob | SliderKnob;
+interface ColorKnob {
+  name: string;
+  type: KnobTypes;
+  colors: string[];
+}
+
+type Knob = SelectKnob | SliderKnob | ColorKnob;
 type KnobValue = string | number;
 const knobProps: {
   [key: string]: Knob;
 } = {};
+
+function addKnobProps(key: string, knob: Knob) {
+  knobProps[key] = knob;
+}
 
 interface KnobsState {
   knobValues: {
     [key: string]: string | number;
   };
   setKnobValue: (key: string, value: KnobValue) => void;
-  addKnob: (key: string, knob: Knob, value: KnobValue) => void;
 }
 
 const useKnobsStore = create<KnobsState>()(
@@ -48,12 +62,6 @@ const useKnobsStore = create<KnobsState>()(
       setKnobValue: (key, value) => {
         set((state) => {
           state.knobValues[key] = value;
-        });
-      },
-      addKnob: (key, knob, value) => {
-        set((state) => {
-          state.knobValues[key] = state.knobValues[key] ?? value;
-          knobProps[key] = knob;
         });
       },
     })),
@@ -78,8 +86,18 @@ const useKnobs = () => {
   );
 
   const addKnob = useCallback(
-    (knob: Knob, value: KnobValue) => {
-      store.addKnob(pathname + knob.name, knob, value);
+    (knob: Knob) => {
+      addKnobProps(pathname + knob.name, knob);
+    },
+    [pathname]
+  );
+
+  const initKnob = useCallback(
+    (name: string, value?: string | number) => {
+      const currentKnobValue = store.knobValues[pathname + name];
+      if (value !== undefined && currentKnobValue === undefined) {
+        store.setKnobValue(pathname + name, value);
+      }
     },
     [pathname, store]
   );
@@ -91,7 +109,33 @@ const useKnobs = () => {
     [pathname, store]
   );
 
-  return { getKnobValue, setKnob, addKnob };
+  // Set global knob props
+  addKnob({
+    name: "Page Type",
+    values: Object.values(Pages),
+    type: KnobTypes.select,
+  });
+
+  addKnob({
+    name: "Page Color",
+    values: Object.values(PageColors),
+    type: KnobTypes.color,
+  });
+
+  addKnob({
+    name: "Pen Color",
+    values: Object.values(PenColors),
+    type: KnobTypes.color,
+  });
+
+  addKnob({
+    name: "Pen Size",
+    min: 1,
+    max: 10,
+    type: KnobTypes.slider,
+  });
+
+  return { getKnobValue, setKnob, addKnob, initKnob };
 };
 
 interface KnobsProps {}
@@ -108,6 +152,8 @@ export const Knobs: FC<KnobsProps> = ({}) => {
     dl.click();
   }, []);
 
+  const knobs = Object.values(knobProps);
+
   return (
     <div
       suppressHydrationWarning
@@ -120,72 +166,106 @@ export const Knobs: FC<KnobsProps> = ({}) => {
         right: 10,
         minHeight: 50,
         borderRadius: 5,
-        padding: 8,
       }}
     >
-      {Object.values(knobProps).map((knobProp) => {
-        const knobValue = getKnobValue(knobProp.name);
-        switch (knobProp.type) {
-          case KnobTypes.select:
-            const selectKnob = knobProp as SelectKnob;
-            return (
-              <Select
-                name={selectKnob.name}
-                value={knobValue as string}
-                values={selectKnob.values}
-                onChange={(value) => setKnob(selectKnob.name, value)}
-                key={selectKnob.name}
-              />
-            );
-          case KnobTypes.slider:
-            const sliderKnob = knobProp as SliderKnob;
-            return (
-              <Slider
-                name={sliderKnob.name}
-                value={knobValue as number}
-                min={sliderKnob.min}
-                max={sliderKnob.max}
-                steps={sliderKnob.steps}
-                onChange={(value) => setKnob(sliderKnob.name, value)}
-                key={sliderKnob.name}
-              />
-            );
+      <FormControl size="xs" className="p-2">
+        {knobs
+          .filter((k) => k.type !== KnobTypes.random)
+          .map((knobProp) => {
+            const knobValue = getKnobValue(knobProp.name);
+            switch (knobProp.type) {
+              case KnobTypes.select:
+                const selectKnob = knobProp as SelectKnob;
+                return (
+                  <Select
+                    name={selectKnob.name}
+                    value={knobValue as string}
+                    values={selectKnob.values}
+                    onChange={(value) => setKnob(selectKnob.name, value)}
+                    key={selectKnob.name}
+                  />
+                );
+              case KnobTypes.slider:
+                const sliderKnob = knobProp as SliderKnob;
+                return (
+                  <Slider
+                    name={sliderKnob.name}
+                    value={knobValue as number}
+                    min={sliderKnob.min}
+                    max={sliderKnob.max}
+                    steps={sliderKnob.steps}
+                    onChange={(value) => setKnob(sliderKnob.name, value)}
+                    key={sliderKnob.name}
+                  />
+                );
 
-          case KnobTypes.random:
-            const randomKnob = knobProp as SliderKnob;
-            return (
-              <Slider
-                name={`${randomKnob.name} Seed`}
-                value={knobValue as number}
-                min={1}
-                max={1000}
-                steps={1}
-                onChange={(value) => setKnob(randomKnob.name, value)}
-                key={randomKnob.name}
-              />
-            );
-        }
-      })}
+              case KnobTypes.color:
+                const colorKnob = knobProp as ColorKnob;
+                return (
+                  <ColorPicker
+                    name={colorKnob.name}
+                    onClick={(value) => setKnob(colorKnob.name, value)}
+                    colors={colorKnob.colors}
+                    color={knobValue as string}
+                    key={colorKnob.name}
+                  />
+                );
+              default:
+                return null;
+            }
+          })}
+      </FormControl>
 
+      <Accordion
+        defaultItem="item-1"
+        activeColor="black"
+        bordered={false}
+        radius="none"
+        size="sm"
+        withRing={false}
+        className="text-sm text-black"
+      >
+        <Accordion.Item anchor="seeds">
+          <Accordion.Header>Seeds</Accordion.Header>
+          <Accordion.Body>
+            {knobs
+              .filter((k) => k.type === KnobTypes.random)
+              .map((knobProp) => {
+                const knobValue = getKnobValue(knobProp.name);
+                const randomKnob = knobProp as SliderKnob;
+                return (
+                  <Slider
+                    name={`${randomKnob.name} Seed`}
+                    value={knobValue as number}
+                    min={1}
+                    max={1000}
+                    steps={1}
+                    onChange={(value) => setKnob(randomKnob.name, value)}
+                    key={randomKnob.name}
+                  />
+                );
+              })}
+          </Accordion.Body>
+        </Accordion.Item>
+      </Accordion>
       <button onClick={download}>Download</button>
     </div>
   );
 };
 
 export function useRandomKnob(name: string): () => number {
-  const { getKnobValue, setKnob, addKnob } = useKnobs();
+  const { getKnobValue, addKnob, initKnob } = useKnobs();
+
+  addKnob({
+    name,
+    type: KnobTypes.random,
+    min: 1,
+    max: 1000,
+    steps: 1,
+  });
 
   useEffect(() => {
-    addKnob(
-      {
-        name,
-        type: KnobTypes.slider,
-        min: 1,
-        max: 1000,
-        steps: 1,
-      },
-      1
-    );
+    initKnob(name, 1);
   }, []);
 
   const rng = prand.xoroshiro128plus((getKnobValue(name) as number) ?? 1);
@@ -203,17 +283,15 @@ export function useSelectKnob<T>({
   values,
   initialValue,
 }: SelectKnobProps): T {
-  const { getKnobValue, setKnob, addKnob } = useKnobs();
+  const { getKnobValue, initKnob, addKnob } = useKnobs();
+  addKnob({
+    name,
+    type: KnobTypes.select,
+    values,
+  });
 
   useEffect(() => {
-    addKnob(
-      {
-        name,
-        type: KnobTypes.select,
-        values,
-      },
-      initialValue ?? values[0]
-    );
+    initKnob(name, initialValue);
   }, []);
 
   return (getKnobValue(name) ?? initialValue ?? values[0]) as T;
@@ -233,19 +311,18 @@ export function useSliderKnob({
   initialValue,
   steps,
 }: SliderKnobProps): number {
-  const { getKnobValue, setKnob, addKnob } = useKnobs();
+  const { getKnobValue, initKnob, addKnob } = useKnobs();
+
+  addKnob({
+    name,
+    type: KnobTypes.slider,
+    min,
+    max,
+    steps,
+  });
 
   useEffect(() => {
-    addKnob(
-      {
-        name,
-        type: KnobTypes.slider,
-        min,
-        max,
-        steps,
-      },
-      initialValue ?? min
-    );
+    initKnob(name, initialValue);
   }, []);
 
   return (getKnobValue(name) as number) ?? initialValue ?? min;
@@ -254,4 +331,29 @@ export function useSliderKnob({
 export function useKnobValue<T>(name: string): T {
   const { getKnobValue } = useKnobs();
   return getKnobValue(name) as T;
+}
+
+interface ColorKnobProps {
+  name: string;
+  colors: string[];
+  initialValue?: string;
+}
+export function useColorKnob<T>({
+  name,
+  colors,
+  initialValue,
+}: ColorKnobProps): T {
+  const { getKnobValue, addKnob, initKnob } = useKnobs();
+
+  addKnob({
+    name,
+    type: KnobTypes.color,
+    colors,
+  });
+
+  useEffect(() => {
+    initKnob(name, initialValue);
+  }, []);
+
+  return (getKnobValue(name) ?? initialValue ?? colors[0]) as T;
 }

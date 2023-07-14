@@ -1,6 +1,6 @@
 import { FC, useEffect, useState } from "react";
 import { Knobs, useKnobValue } from "../components/Knobs";
-import { PageColors } from "../components/Paper";
+import { PageColors, Pages, usePageSize } from "../components/Paper";
 
 const BACKGROUND_COLORS: {
   [key in PageColors]: string;
@@ -13,11 +13,18 @@ const Frame: FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
   const [isMounted, setIsMounted] = useState(false);
+
+  const pageType = useKnobValue<Pages>("Page Type");
   const pageColor = useKnobValue<PageColors>("Page Color");
 
+  const { pageWidth, pageHeight } = usePageSize(pageType);
+
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    if (pageWidth > 0 && pageHeight > 0) {
+      console.log("mounted", pageWidth, pageHeight);
+      setIsMounted(true);
+    }
+  }, [pageWidth, pageHeight]);
 
   if (!isMounted) {
     return null;
