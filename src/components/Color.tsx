@@ -160,8 +160,8 @@ export const ColorPicker = ({
     "yellow",
     "purple",
     "gray",
-    "dark",
     "black",
+    // "none",
   ],
   color: selectedColor = "white",
 }: {
