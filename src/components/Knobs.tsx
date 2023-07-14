@@ -23,14 +23,14 @@ const persistentStorage: StateStorage = {
       const storedValue = searchParams.get(key);
       return JSON.parse(storedValue ?? "null");
     } else {
-      // Otherwise, we should load from localstorage or alternative storage
+      // Otherwise, we should load from localStorage or alternative storage
       return JSON.parse(localStorage.getItem(key) ?? "null");
     }
   },
   setItem: (key, newValue): void => {
     const searchParams = new URLSearchParams(getUrlSearch());
     searchParams.set(key, JSON.stringify(newValue));
-    window.history.replaceState(null, null, `?${searchParams.toString()}`);
+    window.history.replaceState(null, "", `?${searchParams.toString()}`);
     localStorage.setItem(key, JSON.stringify(newValue));
   },
   removeItem: (key): void => {
