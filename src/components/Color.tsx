@@ -2,21 +2,28 @@ import { CheckFat } from "@phosphor-icons/react";
 import { FormControl } from "@rewind-ui/core";
 import { cva } from "class-variance-authority";
 
-interface ColorProps {
-  name: string;
-  color: string;
-  colors: string[];
-  onChange: (color: string) => void;
-}
+export type Colors =
+  | "none"
+  | "white"
+  | "zinc"
+  | "slate"
+  | "blue"
+  | "red"
+  | "green"
+  | "yellow"
+  | "purple"
+  | "gray"
+  | "dark"
+  | "black";
 
 const Color = ({
   color,
   selectedColor,
   onClick,
 }: {
-  color: string;
-  selectedColor: string;
-  onClick: (color: string) => void;
+  color: Colors;
+  selectedColor: Colors;
+  onClick: (color: Colors) => void;
 }) => {
   const style = cva(
     [
@@ -160,14 +167,14 @@ export const ColorPicker = ({
 }: {
   name: string;
   onClick: (color: string) => void;
-  colors?: string[];
-  color?: string;
+  colors?: Colors[];
+  color?: Colors;
 }) => {
   return (
     <>
       <FormControl.Label className="font-medium">{name}</FormControl.Label>
       <div className="flex flex-wrap gap-1">
-        {colors.map((color: string) => (
+        {colors.map((color: Colors) => (
           <Color
             key={color}
             onClick={(event) => {

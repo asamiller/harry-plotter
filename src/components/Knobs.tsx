@@ -7,7 +7,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { PageColors, Pages } from "../components/Paper";
 import { PenColors } from "../constants";
-import { ColorPicker } from "./Color";
+import { ColorPicker, Colors } from "./Color";
 import { Select } from "./Select";
 import { Slider } from "./Slider";
 
@@ -35,7 +35,7 @@ interface SliderKnob {
 interface ColorKnob {
   name: string;
   type: KnobTypes;
-  colors: string[];
+  colors: Colors[];
 }
 
 type Knob = SelectKnob | SliderKnob | ColorKnob;
@@ -206,7 +206,7 @@ export const Knobs: FC<KnobsProps> = ({}) => {
                     name={colorKnob.name}
                     onClick={(value) => setKnob(colorKnob.name, value)}
                     colors={colorKnob.colors}
-                    color={knobValue as string}
+                    color={knobValue as Colors}
                     key={colorKnob.name}
                   />
                 );
@@ -335,8 +335,8 @@ export function useKnobValue<T>(name: string): T {
 
 interface ColorKnobProps {
   name: string;
-  colors: string[];
-  initialValue?: string;
+  colors: Colors[];
+  initialValue?: Colors;
 }
 export function useColorKnob<T>({
   name,
