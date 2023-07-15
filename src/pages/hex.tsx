@@ -1,40 +1,23 @@
 import Frame from "@/components/Frame";
-import { useKnobValue, useSliderKnob } from "@/components/Knobs";
+import { useFromToKnob, useKnobValue, useSliderKnob } from "@/components/Knobs";
 import { Page, PageColors, Pages, usePageSize } from "@/components/Paper";
 import { PenColors } from "@/constants";
 import { generatePolygonPath } from "../generators/polygon";
-import { generateSquirclePath } from "../generators/squircle";
+import { interpolateNumber } from "../helpers";
 
 export default function Home() {
   const pageColor = useKnobValue<PageColors>("Page Color");
   const pageType = useKnobValue<Pages>("Page Type");
   const penColor = useKnobValue<PenColors>("Pen Color");
   const penSize = useKnobValue<number>("Pen Size");
-
-  const size = useSliderKnob({
-    name: "Size",
-    initialValue: 100,
-    min: 1,
-    max: 1000,
-  });
-
-  const radius = useSliderKnob({
-    name: "Radius",
-    initialValue: 0.5,
-    min: 0,
-    max: 1,
-    steps: 0.01,
-  });
-
-  const expansion = useSliderKnob({
-    name: "Expansion",
-    initialValue: 1,
-    min: 0,
-    max: 50,
-    steps: 0.1,
-  });
-
   const { pageHeight, pageWidth } = usePageSize(pageType);
+
+  const numberOfShapes = useSliderKnob({
+    name: "Shapes",
+    initialValue: 50,
+    min: 1,
+    max: 10000,
+  });
 
   const startX = useSliderKnob({
     name: "Start X",
@@ -57,12 +40,25 @@ export default function Home() {
     max: 100,
   });
 
-  const rotation = useSliderKnob({
-    name: "Rotation",
-    initialValue: 0,
-    min: 0,
-    max: 360,
+  const [sizeFrom, sizeTo] = useFromToKnob({
+    name: "Size",
+    min: 1,
+    max: 1000,
+    fromInitialValue: 1,
+    toInitialValue: 1000,
   });
+
+  const [rotationFrom, rotationTo] = useFromToKnob({
+    name: "Rotation",
+    min: -360 * 3,
+    max: 360 * 3,
+    fromInitialValue: 0,
+    toInitialValue: 0,
+    steps: 10,
+  });
+
+  const sizeInterpolation = interpolateNumber(sizeFrom, sizeTo);
+  const rotationInterpolation = interpolateNumber(rotationFrom, rotationTo);
 
   return (
     <Frame>
@@ -74,34 +70,38 @@ export default function Home() {
       >
         <Page pageType={pageType} pageColor={pageColor} />
 
-        <path
-          d={generatePolygonPath({
-            centerX: startX,
-            centerY: startY,
-            radius: size,
-            sides: 6,
-            rotation,
-            cornerRadius,
-          })}
-          stroke={penColor}
-          strokeWidth={penSize}
-          strokeLinecap="round"
-          fill="none"
-        />
+        {[...Array(numberOfShapes)].map((_, index) => (
+          <path
+            d={generatePolygonPath({
+              centerX: startX,
+              centerY: startY,
+              radius: sizeInterpolation(index / numberOfShapes),
+              sides: 6,
+              rotation: rotationInterpolation(index / numberOfShapes),
+              cornerRadius,
+            })}
+            stroke={penColor}
+            strokeWidth={penSize}
+            strokeLinecap="round"
+            fill="none"
+            key={index}
+          />
+        ))}
 
+        {/* 
         <path
           d={generateSquirclePath({
-            x: startX - size / 2,
-            y: startY - size / 2,
-            width: size,
-            height: size,
-            cornerRadius: size * radius,
+            x: startX - sizeFrom / 2,
+            y: startY - sizeFrom / 2,
+            width: sizeFrom,
+            height: sizeFrom,
+            cornerRadius: sizeFrom * radius,
           })}
           stroke={penColor}
           strokeWidth={penSize}
           strokeLinecap="round"
           fill="none"
-        />
+        /> */}
       </svg>
     </Frame>
   );

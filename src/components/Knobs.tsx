@@ -7,6 +7,7 @@ import { StateStorage, createJSONStorage, persist } from "zustand/middleware";
 import { PageColors, Pages } from "../components/Paper";
 import { PenColors } from "../constants";
 import { ColorPicker, Colors } from "./Color";
+import { FromTo } from "./FromTo";
 import { Select } from "./Select";
 import { Slider } from "./Slider";
 
@@ -53,6 +54,7 @@ enum KnobTypes {
   slider = "slider",
   random = "random",
   color = "color",
+  fromTo = "fromTo",
 }
 
 interface SelectKnob {
@@ -76,7 +78,7 @@ interface ColorKnob {
 }
 
 type Knob = SelectKnob | SliderKnob | ColorKnob;
-type KnobValue = string | number;
+type KnobValue = string | number | Colors | [number, number];
 
 const knobProps: {
   [key: string]: Knob;
@@ -119,7 +121,7 @@ const useKnobs = () => {
 
   // create a function to set the value of a knob
   const setKnob = useCallback(
-    (name: string, value: string | number) => {
+    (name: string, value: KnobValue) => {
       useKnobsStore.setState(() => ({ [pathname + name]: value }));
     },
     [pathname]
@@ -135,7 +137,7 @@ const useKnobs = () => {
   );
 
   const initKnob = useCallback(
-    (name: string, value?: string | number) => {
+    (name: string, value?: KnobValue) => {
       const currentKnobValue = store[pathname + name];
       if (value !== undefined && currentKnobValue === undefined) {
         useKnobsStore.setState(() => ({ [pathname + name]: value }));
@@ -260,6 +262,21 @@ export const Knobs: FC<KnobsProps> = ({}) => {
                   key={colorKnob.name}
                 />
               );
+
+            case KnobTypes.fromTo:
+              const fromToKnob = knobProp as FromToKnobProps;
+              return (
+                <FromTo
+                  name={fromToKnob.name}
+                  value={knobValue as [number, number]}
+                  min={fromToKnob.min}
+                  max={fromToKnob.max}
+                  steps={fromToKnob.steps}
+                  onChange={(value) => setKnob(fromToKnob.name, value)}
+                  key={fromToKnob.name}
+                />
+              );
+
             default:
               return null;
           }
@@ -407,4 +424,43 @@ export function useColorKnob<T>({
   }, []);
 
   return (getKnobValue(name) ?? initialValue ?? colors[0]) as T;
+}
+
+interface FromToKnobProps {
+  name: string;
+  min: number;
+  max: number;
+  fromInitialValue?: number;
+  toInitialValue?: number;
+  steps?: number;
+}
+export function useFromToKnob({
+  name,
+  min,
+  max,
+  fromInitialValue,
+  toInitialValue,
+  steps,
+}: FromToKnobProps): [number, number] {
+  const { getKnobValue, initKnob, addKnob } = useKnobs();
+
+  // From knob
+  addKnob({
+    name,
+    type: KnobTypes.fromTo,
+    min,
+    max,
+    steps,
+  });
+
+  useEffect(() => {
+    initKnob(name, [fromInitialValue ?? min, toInitialValue ?? max]);
+  }, []);
+
+  const value = (getKnobValue(name) as [number, number]) ?? [];
+
+  const from = value[0] ?? fromInitialValue;
+  const to = value[1] ?? toInitialValue;
+
+  return [from, to];
 }

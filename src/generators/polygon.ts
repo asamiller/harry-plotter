@@ -5,6 +5,7 @@ interface PolygonParams {
   centerY: number;
   radius: number;
   sides: number;
+  /** Rotation in degrees. */
   rotation?: number;
   cornerRadius?: number;
 }
@@ -24,8 +25,11 @@ export function generatePolygonPath(params: PolygonParams): string {
   }
 
   const pathCommands = ["M"];
+
+  const rotationInRadians = (rotation * Math.PI) / 180;
+
   for (let i = 0; i < sides; i++) {
-    const angle = (i * 2 * Math.PI) / sides - Math.PI / 2 + rotation;
+    const angle = (i * 2 * Math.PI) / sides - Math.PI / 2 + rotationInRadians;
     const pointX = centerX + radius * Math.cos(angle);
     const pointY = centerY + radius * Math.sin(angle);
     pathCommands.push(`${pointX},${pointY}`);
