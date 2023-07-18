@@ -12,30 +12,82 @@ export default function Home() {
   const { pageHeight, pageWidth } = usePageSize(pageType);
 
   const length = useSliderKnob({
-    name: "Shapes",
-    initialValue: 50,
+    name: "Length",
+    initialValue: 20,
     min: 1,
-    max: 10000,
+    max: 1000,
   });
 
-  const ratio = useSliderKnob({
-    name: "Ratio",
-    initialValue: 2,
+  const c1Radius = useSliderKnob({
+    name: "Circle 1 Radius",
+    initialValue: 50,
     min: 1,
-    max: 100,
+    max: 1000,
+  });
+
+  const c1Ratio = useSliderKnob({
+    name: "Circle 1 Ratio",
+    initialValue: 1,
+    min: 0.01,
+    max: 1,
+    steps: 0.01,
+  });
+
+  const c2Radius = useSliderKnob({
+    name: "Circle 2 Radius",
+    initialValue: 50,
+    min: 1,
+    max: 1000,
+  });
+
+  const c2Ratio = useSliderKnob({
+    name: "Circle 2 Ratio",
+    initialValue: 1,
+    min: 0.01,
+    max: 1,
+    steps: 0.01,
+  });
+
+  const c3Radius = useSliderKnob({
+    name: "Circle 3 Radius",
+    initialValue: 50,
+    min: 1,
+    max: 1000,
+  });
+
+  const c3Ratio = useSliderKnob({
+    name: "Circle 3 Ratio",
+    initialValue: 1,
+    min: 0.01,
+    max: 1,
+    steps: 0.01,
+  });
+
+  const scale = useSliderKnob({
+    name: "Scale",
+    initialValue: 1,
+    min: 0.01,
+    max: 2,
+    steps: 0.01,
   });
 
   const svgPath = generateSpirographPath(
     [
-      { radius: 30, inside: true },
-      { radius: 50, inside: false, ratio },
+      { radius: c1Radius * scale, inside: false, ratio: c1Ratio },
+      { radius: c2Radius * scale, inside: false, ratio: c2Ratio },
+      { radius: c3Radius * scale, inside: false, ratio: c3Ratio },
     ],
     length,
     pageWidth / 2,
     pageHeight / 2
   );
 
-  console.log("svgPath", svgPath);
+  const rotate = useSliderKnob({
+    name: "Rotate",
+    initialValue: 0,
+    min: 0,
+    max: 359,
+  });
 
   return (
     <Frame>
@@ -46,7 +98,14 @@ export default function Home() {
         id="sketch"
       >
         <Page pageType={pageType} pageColor={pageColor} />
-        <path d={svgPath} stroke={penColor} strokeWidth={penSize} fill="none" />
+        <g transform={`rotate(${rotate}, ${pageWidth / 2}, ${pageHeight / 2})`}>
+          <path
+            d={svgPath}
+            stroke={penColor}
+            strokeWidth={penSize}
+            fill="none"
+          />
+        </g>
       </svg>
     </Frame>
   );
