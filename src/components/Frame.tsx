@@ -1,7 +1,7 @@
 import { FC, useEffect, useState } from "react";
 import { useWindowSize } from "usehooks-ts";
 import { Knobs, useKnobValue } from "../components/Knobs";
-import { PageColors } from "../components/Paper";
+import { Page, PageColors, Pages, usePageSize } from "../components/Paper";
 
 const BACKGROUND_COLORS: {
   [key in PageColors]: string;
@@ -13,9 +13,11 @@ const BACKGROUND_COLORS: {
 const Frame: FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
-  const [isMounted, setIsMounted] = useState(false);
+  const pageType = useKnobValue<Pages>("Page Type");
   const pageColor = useKnobValue<PageColors>("Page Color");
+  const { pageHeight, pageWidth } = usePageSize(pageType);
 
+  const [isMounted, setIsMounted] = useState(false);
   const { width, height } = useWindowSize();
 
   useEffect(() => {
@@ -29,11 +31,19 @@ const Frame: FC<{
   }
 
   return (
-    <>
+    <div
+      style={{
+        backgroundColor: BACKGROUND_COLORS[pageColor],
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        flex: 1,
+      }}
+    >
       <div
         suppressHydrationWarning
         style={{
-          backgroundColor: BACKGROUND_COLORS[pageColor],
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -41,10 +51,19 @@ const Frame: FC<{
           flex: 1,
         }}
       >
-        {children}
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height={pageHeight}
+          width={pageWidth}
+          viewBox={`0 0 ${pageWidth} ${pageHeight}`}
+          id="sketch"
+        >
+          <Page pageType={pageType} pageColor={pageColor} />
+          <g clipPath="page-clip">{children}</g>
+        </svg>
       </div>
       <Knobs />
-    </>
+    </div>
   );
 };
 

@@ -215,9 +215,6 @@ export const Knobs: FC<KnobsProps> = ({}) => {
         width: "30%",
         backgroundColor: "white",
         boxShadow: "0 0 10px rgba(0, 0, 0, 0.5)",
-        position: "absolute",
-        top: 10,
-        right: 10,
         minHeight: 50,
         borderRadius: 5,
       }}

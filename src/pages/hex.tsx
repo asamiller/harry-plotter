@@ -1,6 +1,6 @@
 import Frame from "@/components/Frame";
 import { useFromToKnob, useKnobValue, useSliderKnob } from "@/components/Knobs";
-import { Page, PageColors, Pages, usePageSize } from "@/components/Paper";
+import { PageColors, Pages, usePageSize } from "@/components/Paper";
 import { PenColors } from "@/constants";
 import { generatePolygonPath } from "../generators/polygon";
 import { interpolateNumber } from "../helpers";
@@ -62,33 +62,25 @@ export default function Home() {
 
   return (
     <Frame>
-      <svg
-        height={pageHeight}
-        width={pageWidth}
-        viewBox={`0 0 ${pageWidth} ${pageHeight}`}
-        id="sketch"
-      >
-        <Page pageType={pageType} pageColor={pageColor} />
+      {[...Array(numberOfShapes)].map((_, index) => (
+        <path
+          d={generatePolygonPath({
+            centerX: startX,
+            centerY: startY,
+            radius: sizeInterpolation(index / numberOfShapes),
+            sides: 6,
+            rotation: rotationInterpolation(index / numberOfShapes),
+            cornerRadius,
+          })}
+          stroke={penColor}
+          strokeWidth={penSize}
+          strokeLinecap="round"
+          fill="none"
+          key={index}
+        />
+      ))}
 
-        {[...Array(numberOfShapes)].map((_, index) => (
-          <path
-            d={generatePolygonPath({
-              centerX: startX,
-              centerY: startY,
-              radius: sizeInterpolation(index / numberOfShapes),
-              sides: 6,
-              rotation: rotationInterpolation(index / numberOfShapes),
-              cornerRadius,
-            })}
-            stroke={penColor}
-            strokeWidth={penSize}
-            strokeLinecap="round"
-            fill="none"
-            key={index}
-          />
-        ))}
-
-        {/* 
+      {/* 
         <path
           d={generateSquirclePath({
             x: startX - sizeFrom / 2,
@@ -102,7 +94,6 @@ export default function Home() {
           strokeLinecap="round"
           fill="none"
         /> */}
-      </svg>
     </Frame>
   );
 }

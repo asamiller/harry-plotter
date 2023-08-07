@@ -1,6 +1,6 @@
 import Frame from "@/components/Frame";
 import { useKnobValue, useRandomKnob, useSliderKnob } from "@/components/Knobs";
-import { Page, PageColors, Pages, usePageSize } from "@/components/Paper";
+import { PageColors, Pages, usePageSize } from "@/components/Paper";
 import { PenColors } from "@/constants";
 
 export default function Home() {
@@ -21,29 +21,20 @@ export default function Home() {
 
   return (
     <Frame>
-      <svg
-        height={pageHeight}
-        width={pageWidth}
-        viewBox={`0 0 ${pageWidth} ${pageHeight}`}
-        id="sketch"
-      >
-        <Page pageType={pageType} pageColor={pageColor} />
-
-        {[...Array(numberOfLines)].map((_, i) => {
-          return (
-            <line
-              x1={random() * pageWidth}
-              y1={random() * pageHeight}
-              x2={random() * pageWidth}
-              y2={random() * pageHeight}
-              stroke={penColor}
-              strokeWidth={penSize}
-              strokeLinecap="round"
-              key={i}
-            />
-          );
-        })}
-      </svg>
+      {[...Array(numberOfLines)].map((_, i) => {
+        return (
+          <line
+            x1={random() * pageWidth}
+            y1={random() * pageHeight}
+            x2={random() * pageWidth}
+            y2={random() * pageHeight}
+            stroke={penColor}
+            strokeWidth={penSize}
+            strokeLinecap="round"
+            key={i}
+          />
+        );
+      })}
     </Frame>
   );
 }

@@ -32,7 +32,7 @@ export function usePageSize(pageType: Pages) {
     };
   }
 
-  const screenWidth = Math.max((width ?? 0) - PADDING * 2, 0);
+  const screenWidth = Math.max((width ?? 0) - PADDING * 2, 0) * 0.7; // remove 30% for knobs
   const screenHeight = Math.max((height ?? 0) - PADDING * 2, 0);
 
   const heightToWidthRatio = heightToWidthRatios[pageType];
@@ -65,14 +65,27 @@ export const Page: FC<PageProps> = ({
   const { pageHeight, pageWidth } = usePageSize(pageType);
 
   return (
-    <rect
-      x={0}
-      y={0}
-      width={pageWidth}
-      height={pageHeight}
-      stroke="none"
-      strokeWidth="0"
-      fill={pageColor}
-    />
+    <>
+      <clipPath id="page-clip">
+        <rect
+          x={0}
+          y={0}
+          width={pageWidth}
+          height={pageHeight}
+          stroke="none"
+          strokeWidth="0"
+          fill={pageColor}
+        />
+      </clipPath>
+      <rect
+        x={0}
+        y={0}
+        width={pageWidth}
+        height={pageHeight}
+        stroke="none"
+        strokeWidth="0"
+        fill={pageColor}
+      />
+    </>
   );
 };

@@ -1,6 +1,6 @@
 import Frame from "@/components/Frame";
 import { useKnobValue, useSliderKnob } from "@/components/Knobs";
-import { Page, PageColors, Pages, usePageSize } from "@/components/Paper";
+import { PageColors, Pages, usePageSize } from "@/components/Paper";
 import { PenColors } from "@/constants";
 import { generateSpirographPath } from "../generators/spirograph";
 
@@ -91,22 +91,9 @@ export default function Home() {
 
   return (
     <Frame>
-      <svg
-        height={pageHeight}
-        width={pageWidth}
-        viewBox={`0 0 ${pageWidth} ${pageHeight}`}
-        id="sketch"
-      >
-        <Page pageType={pageType} pageColor={pageColor} />
-        <g transform={`rotate(${rotate}, ${pageWidth / 2}, ${pageHeight / 2})`}>
-          <path
-            d={svgPath}
-            stroke={penColor}
-            strokeWidth={penSize}
-            fill="none"
-          />
-        </g>
-      </svg>
+      <g transform={`rotate(${rotate}, ${pageWidth / 2}, ${pageHeight / 2})`}>
+        <path d={svgPath} stroke={penColor} strokeWidth={penSize} fill="none" />
+      </g>
     </Frame>
   );
 }
