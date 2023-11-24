@@ -33,17 +33,16 @@ export default function Home() {
     max: pageHeight,
   });
 
-  const cornerRadius = useSliderKnob({
+  const [cornerRadiusFrom, cornerRadiusTo] = useFromToKnob({
     name: "Corner Radius",
-    initialValue: 0,
     min: 0,
-    max: 100,
+    max: 1000,
   });
 
   const [sizeFrom, sizeTo] = useFromToKnob({
     name: "Size",
     min: 1,
-    max: 1000,
+    max: 1200,
     fromInitialValue: 1,
     toInitialValue: 1000,
   });
@@ -59,6 +58,10 @@ export default function Home() {
 
   const sizeInterpolation = interpolateNumber(sizeFrom, sizeTo);
   const rotationInterpolation = interpolateNumber(rotationFrom, rotationTo);
+  const cornerRadiusInterpolation = interpolateNumber(
+    cornerRadiusFrom,
+    cornerRadiusTo
+  );
 
   return (
     <Frame>
@@ -70,7 +73,7 @@ export default function Home() {
             radius: sizeInterpolation(index / numberOfShapes),
             sides: 6,
             rotation: rotationInterpolation(index / numberOfShapes),
-            cornerRadius,
+            cornerRadius: cornerRadiusInterpolation(index / numberOfShapes),
           })}
           stroke={penColor}
           strokeWidth={penSize}

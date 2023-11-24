@@ -13,6 +13,8 @@ export enum Pages {
   portrait11x17 = "11x17 Portrait",
   landscape85x11 = "8.5x11 Landscape",
   portrait85x11 = "8.5x11 Portrait",
+  landscape11x14 = "11x14 Landscape",
+  portrait11x14 = "11x14 Portrait",
 }
 
 const heightToWidthRatios = {
@@ -20,6 +22,8 @@ const heightToWidthRatios = {
   [Pages.portrait11x17]: 17 / 11, // 1.5454545454545454
   [Pages.landscape85x11]: 8.5 / 11, // 0.7727272727272727
   [Pages.portrait85x11]: 11 / 8.5, // 1.2941176470588236
+  [Pages.landscape11x14]: 11 / 14,
+  [Pages.portrait11x14]: 14 / 11,
 };
 
 export function usePageSize(pageType: Pages) {
